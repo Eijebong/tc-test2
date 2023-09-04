@@ -2,4 +2,4 @@ version: 1
 reporting: checks-v1
 policy:
   pullRequests: public
-config-from: github.com/Eijebong/tc-test1/.taskcluster.yml
+config-from: github.com/Eijebong/tc-test1/.taskcluster.yml@main
