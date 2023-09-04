@@ -1,0 +1,58 @@
+version: 1
+reporting: checks-v1
+policy:
+  pullRequests: public
+tasks:
+  $let:
+    head_rev:
+      $if: tasks_for == "github-pull-request"
+      then: ${event.pull_request.head.sha}
+      else: ${event.after}
+    repository:
+      $if: tasks_for == "github-pull-request"
+      then: ${event.pull_request.head.repo.html_url}
+      else: ${event.repository.html_url}
+    repo_name:
+      $if: tasks_for == "github-pull-request"
+      then: ${event.pull_request.head.repo.name}
+      else: ${event.repository.name}
+    repo_full_name:
+      $if: tasks_for == "github-pull-request"
+      then: ${event.pull_request.head.repo.full_name}
+      else: ${event.repository.full_name}
+    branch:
+        $if: tasks_for == "github-pull-request"
+        then: "pull-request"
+        else:
+          $if: "event.ref[:11] == 'refs/heads/'"
+          then: "branch:${event.ref[11:]}"
+          else:
+            $if: "event.ref[:10] == 'refs/tags/'"
+            then: "tag:${event.ref[10:]}"
+            else: "unknown"
+    git_ref:
+      $if: tasks_for == "github-pull-request"
+      then: "refs/pull/${event.pull_request.number}"
+      else: ${event.ref}
+  in:
+    - metadata:
+        name: Test task
+        description: This is a test task
+        owner: ${event.sender.login}@users.noreply.github.com
+        source:
+          $if: tasks_for == "github-pull-request"
+          then: ${event.pull_request.html_url}
+          else: ${event.compare}
+      deadline:
+        $fromNow: 1 day
+      taskQueueId: docker-compose/generic-worker
+      projectId: taskcluster-ui
+      scopes:
+        - "assume:repo:github.com/${repo_full_name}:${branch}"
+      payload:
+        command:
+          - - bash
+            - '-cx'
+            - sleep 1
+        maxRunTime: 3600
+
